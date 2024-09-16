@@ -1,0 +1,4 @@
+services:
+  recorder_feedback_utils:
+    class: Drupal\recorder_feedback_indicia_connector\RecorderFeedbackUtils
+    arguments: ['@config.factory', '@logger.factory', '@messenger']

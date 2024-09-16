@@ -1,0 +1,26 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_rec_feedback_registered
+  module:
+    - user
+  enforced:
+    module:
+      - recorder_feedback_indicia_connector
+id: user.user.field_rec_feedback_registered
+field_name: field_rec_feedback_registered
+entity_type: user
+bundle: user
+label: 'Recorder feedback registered'
+description: 'Has the user account been registered into the Recorder Feedback external system?'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

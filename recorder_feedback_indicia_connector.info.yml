@@ -1,0 +1,8 @@
+name: 'Recorder Feedback Indicia Connector'
+description: 'Allow users to subscripe to an external Recorder Feedback service.'
+core_version_requirement: ^10
+version: "1.0.0"
+package: "Indicia"
+type: module
+dependencies:
+  - iform

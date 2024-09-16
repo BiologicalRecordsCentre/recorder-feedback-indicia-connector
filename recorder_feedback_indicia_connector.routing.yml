@@ -1,0 +1,7 @@
+recorder_feedback_indicia_connector.settings:
+  path: '/admin/config/recorder_feedback_indicia_connector/settings'
+  defaults:
+    _form: '\Drupal\recorder_feedback_indicia_connector\Form\RecorderFeedbackIndiciaConnectorSettingsForm'
+    _title: 'Recorder Feedback Indicia Connector settings'
+  requirements:
+    _permission: 'administer site configuration'

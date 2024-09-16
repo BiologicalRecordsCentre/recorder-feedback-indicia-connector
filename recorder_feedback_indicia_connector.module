@@ -1,0 +1,125 @@
+<?php
+
+/**
+ * @file
+ * Indicia connector module for the Recorder Feedback service.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Adds checkboxes for subscribing to feedback lists to the user form.
+ */
+function recorder_feedback_indicia_connector_form_user_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $utils = Drupal::service('recorder_feedback_utils');
+  if ($utils->validateConfig()) {
+    $account = \Drupal::routeMatch()->getParameter('user');
+    $lists = $utils->getLists($account);
+    $form['recorder_feedback_subscriptions'] = [
+      '#type' => 'fieldset',
+      '#title' => t('Recorder feedback'),
+      '#description' => t('Select which type of recorder feedback emails you would like to receive.'),
+    ];
+    foreach ($lists as $list) {
+      $checked = !empty($list->subscribed) && $account->field_rec_feedback_registered->value;
+      $form['recorder_feedback_subscriptions']["feedbacklist-$list->id"] = [
+        '#title' => $list->name,
+        '#description' => $list->description,
+        '#type' => 'checkbox',
+        '#default_value' => $checked,
+      ];
+    }
+    // Hide the registered flag as for system use.
+    $form['field_rec_feedback_registered']['#access'] = FALSE;
+    $form['field_rec_feedback_request_lists']['#access'] = FALSE;
+    // Add the submit handler to handle the external service updates.
+    foreach (array_keys($form['actions']) as $action) {
+      if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
+        array_unshift($form['actions'][$action]['#submit'], 'recorder_feedback_indicia_connector_user_form_submit');
+      }
+    }
+  }
+}
+
+/**
+ * User form submit handler.
+ *
+ * Registers new users on the Recorder Feedback service. Adds or removes
+ * subscriptions according to options chosen.
+ */
+function recorder_feedback_indicia_connector_user_form_submit(array $form, FormStateInterface $form_state) {
+  $utils = Drupal::service('recorder_feedback_utils');
+  $account = Drupal::routeMatch()->getParameter('user');
+  $formValues = $form_state->getValues();
+  $subscriptionCheckboxes = preg_grep('/^feedbacklist\-/', array_keys($formValues));
+  $checkedListIds = [];
+  foreach ($subscriptionCheckboxes as $checkbox) {
+    if ($formValues[$checkbox]) {
+      $checkedListIds[] = str_replace('feedbacklist-', '', $checkbox);
+    }
+  }
+  $allLists = $utils->getLists($account);
+  $isRegistered = $account && $account->field_rec_feedback_registered->value;
+  if (count($checkedListIds) > 0 && !$isRegistered) {
+    // User is not yet registered on external service, but wants to subscribe.
+    $indiciaUserId = $account ? hostsite_get_user_field('indicia_user_id', FALSE, FALSE, $account->id()) : NULL;
+    if ($indiciaUserId) {
+      // User already linked to warehouse, so can register on external service.
+      if ($utils->registerUser($account)) {
+        $form_state->setValue('field_rec_feedback_registered', ['value' => '1']);
+        Drupal::messenger()->addStatus(t('You have successfully registered to receive Recorder Feedback emails.'));
+        $isRegistered = TRUE;
+      }
+    }
+    else {
+      // User not yet registered on the warehouse, so save their choices for
+      // later.
+      $valueList = array_map(function (int $value): array {
+        return ['value' => $value];
+      }, $checkedListIds);
+      $form_state->setValue('field_rec_feedback_request_lists', $valueList);
+      // @todo Register user once they get a warehouse user ID.
+    }
+  }
+  if ($isRegistered) {
+    foreach ($allLists as $list) {
+      if (!($list->subscribed ?? FALSE) && in_array($list->id, $checkedListIds)) {
+        $utils->subscribe($account, $list->id);
+      }
+      elseif (($list->subscribed ?? FALSE) && !in_array($list->id, $checkedListIds)) {
+        $utils->unsubscribe($account, $list->id);
+      }
+    }
+  }
+  // If user already subscribed, but changes name or email, update user on
+  // external service.
+  if ($isRegistered
+      && ($formValues['field_first_name'][0]['value'] !== $account->field_first_name->value
+      || $formValues['field_last_name'][0]['value'] !== $account->field_last_name->value
+      || $formValues['mail'] !== $account->getEmail())) {
+    $utils->updateUser($account, $formValues['field_first_name'][0]['value'], $formValues['field_last_name'][0]['value'], $formValues['mail']);
+  }
+  // @todo If user already subscribed, but now unticks all boxes, delete the user.
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function recorder_feedback_indicia_connector_user_presave($account) {
+  // If, has indicia_user_id. Not registered on service. field_rec_feedback_registered has contents.
+  if ($account->field_indicia_user_id->value && !$account->field_rec_feedback_registered->value)  {
+    $requestedLists = $account->get('field_rec_feedback_request_lists')->getValue();
+    if (count($requestedLists) > 0) {
+      $utils = Drupal::service('recorder_feedback_utils');
+      if ($utils->registerUser($account)) {
+        $account->set('field_rec_feedback_registered', '1');
+        Drupal::messenger()->addStatus(t('You have successfully registered to receive Recorder Feedback emails.'));
+        foreach ($requestedLists as $list) {
+          $utils->subscribe($account, $list['value']);
+        }
+      }
+    }
+  }
+}

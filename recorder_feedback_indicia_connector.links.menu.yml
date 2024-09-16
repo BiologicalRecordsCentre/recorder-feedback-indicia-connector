@@ -1,0 +1,6 @@
+recorder_feedback_indicia_connector.settings:
+  title: 'Recorder Feedback Indicia Connector settings'
+  description: 'Settings page for the Recorder Feedback Indicia Connector module'
+  parent: iform.admin_config_iform
+  route_name: recorder_feedback_indicia_connector.settings
+  weight: 50

@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * @file
+ * Install functionality for the Recorder Feedback Indicia Connector module.
+ */
+
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_install().
+ */
+function recorder_feedback_indicia_connector_install() {
+  $messenger = \Drupal::messenger();
+  $messenger->addStatus(t('Please <a href="@configUrl">configure the API</a> for the <em class="placeholder">Recorder Feedback Indicia Connector</em> module.', [
+    '@configUrl' => Url::fromRoute('recorder_feedback_indicia_connector.settings')->toString(),
+  ]));
+}
