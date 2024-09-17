@@ -58,7 +58,7 @@ class RecorderFeedbackIndiciaConnectorSettingsForm extends ConfigFormBase {
     $form['api_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('API URL'),
-      '#description' => $this->t('URL for the Recorder Feedback API.'),
+      '#description' => $this->t('Base URL for the Recorder Feedback API.'),
       '#default_value' => $config->get('api_url'),
       '#required' => TRUE,
     ];

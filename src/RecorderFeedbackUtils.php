@@ -225,7 +225,7 @@ class RecorderFeedbackUtils implements ContainerInjectionInterface {
     $config = $this->configFactory->get('recorder_feedback_indicia_connector.settings');
     $serviceUrl = $config->get('api_url');
     $apiKey = $config->get('api_key');
-    $url = "$serviceUrl/api/$resource";
+    $url = "$serviceUrl/$resource";
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       "Authorization: Bearer $apiKey",
