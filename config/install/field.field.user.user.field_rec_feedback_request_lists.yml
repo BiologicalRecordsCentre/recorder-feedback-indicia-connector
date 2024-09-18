@@ -1,0 +1,26 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_rec_feedback_request_lists
+  module:
+    - user
+id: user.user.field_rec_feedback_request_lists
+field_name: field_rec_feedback_request_lists
+entity_type: user
+bundle: user
+label: 'Requested Recorder Feedback'
+description: 'Used by the Recorder Feedback Indicia Connector module to track requested list subscriptions when a user attempts to subscribe but is not yet registered on Indicia. They will be registered on the Recorder Feedback service and subscriptions added once their Indicia user ID is available.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer
+enforced:
+  module:
+    - recorder_feedback_indicia_connector

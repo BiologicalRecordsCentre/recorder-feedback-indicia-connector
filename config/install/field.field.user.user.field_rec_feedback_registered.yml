@@ -12,7 +12,7 @@ id: user.user.field_rec_feedback_registered
 field_name: field_rec_feedback_registered
 entity_type: user
 bundle: user
-label: 'Recorder feedback registered'
+label: 'Recorder Feedback registered'
 description: 'Has the user account been registered into the Recorder Feedback external system?'
 required: false
 translatable: false

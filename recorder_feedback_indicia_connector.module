@@ -22,8 +22,19 @@ function recorder_feedback_indicia_connector_form_user_form_alter(&$form, FormSt
       '#title' => t('Recorder feedback'),
       '#description' => t('Select which type of recorder feedback emails you would like to receive.'),
     ];
+    // For unregistered users, their field_rec_feedback_request_lists field
+    // holds the requested lists from when they first registered on Drupal.
+    $requested = [];
+    foreach ($account->get('field_rec_feedback_request_lists')->getValue() as $item) {
+      if (!empty($item['value'])) {
+        $requested[] = $item['value'];
+      }
+    };
     foreach ($lists as $list) {
-      $checked = !empty($list->subscribed) && $account->field_rec_feedback_registered->value;
+      // Check the box, either if subscribed, or they signalled intention to
+      // subscribe but haven't yet registered the user on the Recorder Feedback
+      // service.
+      $checked = !empty($list->subscribed) || (!$account->field_rec_feedback_registered->value && in_array($list->id, $requested));
       $form['recorder_feedback_subscriptions']["feedbacklist-$list->id"] = [
         '#title' => $list->name,
         '#description' => $list->description,
@@ -80,7 +91,6 @@ function recorder_feedback_indicia_connector_user_form_submit(array $form, FormS
         return ['value' => $value];
       }, $checkedListIds);
       $form_state->setValue('field_rec_feedback_request_lists', $valueList);
-      // @todo Register user once they get a warehouse user ID.
     }
   }
   if ($isRegistered) {
@@ -106,10 +116,12 @@ function recorder_feedback_indicia_connector_user_form_submit(array $form, FormS
 
 /**
  * Implements hook_ENTITY_TYPE_presave().
+ *
+ * Performs initial registration onto the Recorder Feedback service.
  */
 function recorder_feedback_indicia_connector_user_presave($account) {
-  // If, has indicia_user_id. Not registered on service. field_rec_feedback_registered has contents.
-  if ($account->field_indicia_user_id->value && !$account->field_rec_feedback_registered->value)  {
+  // If user registered on Indicia, but not on Recorder Feedback.
+  if ($account->field_indicia_user_id && $account->field_indicia_user_id->value && !$account->field_rec_feedback_registered->value) {
     $requestedLists = $account->get('field_rec_feedback_request_lists')->getValue();
     if (count($requestedLists) > 0) {
       $utils = Drupal::service('recorder_feedback_utils');
