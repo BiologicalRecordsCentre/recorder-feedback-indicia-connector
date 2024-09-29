@@ -22,14 +22,17 @@ function recorder_feedback_indicia_connector_form_user_form_alter(&$form, FormSt
       '#title' => t('Recorder feedback'),
       '#description' => t('Select which type of recorder feedback emails you would like to receive.'),
     ];
-    // For unregistered users, their field_rec_feedback_request_lists field
-    // holds the requested lists from when they first registered on Drupal.
+    // For users who are registered on Drupal but unregistered on the API,
+    // their field_rec_feedback_request_lists field holds the requested lists
+    // from when they first registered on Drupal.
     $requested = [];
-    foreach ($account->get('field_rec_feedback_request_lists')->getValue() as $item) {
-      if (!empty($item['value'])) {
-        $requested[] = $item['value'];
-      }
-    };
+    if ($account) {
+      foreach ($account->get('field_rec_feedback_request_lists')->getValue() as $item) {
+        if (!empty($item['value'])) {
+          $requested[] = $item['value'];
+        }
+      };
+    }
     foreach ($lists as $list) {
       // Check the box, either if subscribed, or they signalled intention to
       // subscribe but haven't yet registered the user on the Recorder Feedback
